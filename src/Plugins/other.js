@@ -158,6 +158,6 @@ https://github.com/Dark-Xploit/CypherX
 `;
 
       reply(timeInfo.trim());
-    }
-  }
+   }
+},
 ];

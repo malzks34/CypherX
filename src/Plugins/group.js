@@ -83,21 +83,21 @@ module.exports = [
         }
     }
 },
-  {
+{
     command: ['antilink'],
     operate: async (context) => {
-        const { m, db, from, isBotAdmins, isAdmins, isCreator, args, mess, command, reply } = context;
+        const { m, db, from, isBotAdmins, isAdmins, isCreator, args, mess, reply } = context;
 
         if (!m.isGroup) return reply(mess.group); 
         if (!isBotAdmins) return reply(mess.admin); 
         if (!isAdmins && !isCreator) return reply(mess.notadmin); 
-        if (args.length < 2) return reply("*Usage: .antilink <delete/kick> <on/off>*");
+        if (args.length < 2) return reply("*Usage: .antilink <delete/kick/warn> <on/off>*");
 
         const mode = args[0].toLowerCase();
         const state = args[1].toLowerCase();
 
-        if (!["delete", "kick"].includes(mode)) {
-            return reply("*Invalid mode! Use either 'delete' or 'kick'.*");
+        if (!["delete", "kick", "warn"].includes(mode)) {
+            return reply("*Invalid mode! Use either 'delete', 'kick', or 'warn'.*");
         }
 
         if (!["on", "off"].includes(state)) {
@@ -105,23 +105,58 @@ module.exports = [
         }
 
         if (state === "on") {
-            if (mode === "delete") {
-          db.chats[from].antilinkkick = false;
-          db.chats[from].antilink = true;
-            } else if (mode === "kick") {
-         db.chats[from].antilink = false;
-         db.chats[from].antilinkkick = true;
-            }
+            db.chats[from].antilink = false;
+            db.chats[from].antilinkkick = false;
+            db.chats[from].antilinkwarn = false;
+
+            if (mode === "delete") db.chats[from].antilink = true;
+            else if (mode === "kick") db.chats[from].antilinkkick = true;
+            else if (mode === "warn") db.chats[from].antilinkwarn = true;
+
             reply(`*Successfully enabled antilink ${mode} mode!*`);
         } else if (state === "off") {
-            if (mode === "delete") {
-          db.chats[from].antilinkkick = false;
-          db.chats[from].antilink = false;
-            } else if (mode === "kick") {
-         db.chats[from].antilink = false;
-         db.chats[from].antilinkkick = false;
-            }
+            if (mode === "delete" && db.chats[from].antilink) db.chats[from].antilink = false;
+            else if (mode === "kick" && db.chats[from].antilinkkick) db.chats[from].antilinkkick = false;
+            else if (mode === "warn" && db.chats[from].antilinkwarn) db.chats[from].antilinkwarn = false;
+            
             reply(`*Successfully disabled antilink ${mode} mode!*`);
+        }
+    }
+},
+{
+    command: ['antigroupmention'],
+    operate: async (context) => {
+        const { m, db, from, isBotAdmins, isAdmins, isCreator, args, mess, reply } = context;
+
+        if (!m.isGroup) return reply(mess.group); 
+        if (!isBotAdmins) return reply(mess.admin); 
+        if (!isAdmins && !isCreator) return reply(mess.notadmin); 
+        if (args.length < 2) return reply("*Usage: .antigroupmention <kick/warn> <on/off>*");
+
+        const mode = args[0].toLowerCase();
+        const state = args[1].toLowerCase();
+
+        if (!["kick", "warn"].includes(mode)) {
+            return reply("*Invalid mode! Use either 'kick', or 'warn'.*");
+        }
+
+        if (!["on", "off"].includes(state)) {
+            return reply("*Invalid state! Use either 'on' or 'off'.*");
+        }
+
+        if (state === "on") {
+            db.chats[from].antigroupmentionkick = false;
+            db.chats[from].antigroupmentionwarn = false;
+
+            if (mode === "kick") db.chats[from].antigroupmentionkick = true;
+            else if (mode === "warn") db.chats[from].antigroupmentionwarn = true;
+
+            reply(`*Successfully enabled anti-group mention ${mode} mode!*`);
+        } else if (state === "off") {
+           if (mode === "kick") db.chats[from].antigroupmentionkick = false;
+            else if (mode === "warn") db.chats[from].antigroupmentionwarn = false;
+            
+            reply(`*Successfully disabled anti-group mention ${mode} mode!*`);
         }
     }
 },
@@ -164,6 +199,76 @@ module.exports = [
             reply(`*Successfully disabled antilinkgc ${mode} mode!*`);
         }
     },
+},
+{
+    command: ['allow'],
+    operate: async (context) => {
+        const { m, db, from, isAdmins, isCreator, args, reply, isBotAdmins, Cypher } = context;
+
+        if (!m.isGroup) return reply(mess.group);
+        if (!isBotAdmins) return reply(mess.admin);
+        if (!isAdmins && !isCreator) return reply(mess.notadmin);
+
+        let user = m.mentionedJid && m.mentionedJid[0] || (m.quoted ? m.quoted.sender : null);
+        if (!user) return reply("*Mention or reply to a user to allow to send a link!*");
+
+        if (!db.chats[from].allowedUsers) db.chats[from].allowedUsers = {};
+        if (!db.chats[from].allowedUsers[user]) db.chats[from].allowedUsers[user] = 0;
+
+        db.chats[from].allowedUsers[user]++;
+
+  await Cypher.sendMessage(from,
+       { text: `*@${user.split("@")[0]} has been allowed to send a link (${db.chats[from].allowedUsers[user]} chance(s)).*`,
+    contextInfo: { mentionedJid: [user] },
+                }, { quoted: m });
+    }
+},
+{
+    command: ['delallowed'],
+    operate: async (context) => {
+        const { m, db, from, isAdmins, isCreator, args, reply, isBotAdmins, Cypher } = context;
+
+        if (!m.isGroup) return reply(mess.group);
+        if (!isBotAdmins) return reply(mess.admin);
+        if (!isAdmins && !isCreator) return reply(mess.notadmin);
+
+        let user = m.mentionedJid && m.mentionedJid[0] || (m.quoted ? m.quoted.sender : null);
+        if (!user) return reply("*Mention or reply to a user to remove from allowed link sender's list!*");
+
+        if (!db.chats[from].allowedUsers || !db.chats[from].allowedUsers[user]) {
+            return Cypher.sendMessage(from,
+       { text: `*@${user.split("@")[0]} is not in the allowed list.*`,
+    contextInfo: { mentionedJid: [user] },
+                }, { quoted: m });
+        }
+
+        delete db.chats[from].allowedUsers[user];
+        await Cypher.sendMessage(from,
+       { text: `*@${user.split("@")[0]} is no longer allowed to send a link here.*`,
+    contextInfo: { mentionedJid: [user] },
+                }, { quoted: m });
+    }
+},
+{
+    command: ['listallowed'],
+    operate: async (context) => {
+        const { db, from, reply, m, Cypher } = context;
+
+        if (!m.isGroup) return reply(mess.group);
+
+        if (!db.chats[from] || !db.chats[from].allowedUsers || Object.keys(db.chats[from].allowedUsers).length === 0) {
+            return reply("*No users are currently allowed to send links.*");
+        }
+
+        let allowedUsers = Object.entries(db.chats[from].allowedUsers)
+            .map(([user, count]) => `@${user.split("@")[0]} (${count} chance(s))`)
+            .join("\n");
+
+   await Cypher.sendMessage(from, {
+            text: `*Allowed Users List:*\n\n${allowedUsers}`,
+            contextInfo: { mentionedJid: Object.keys(db.chats[from].allowedUsers) },
+        }, { quoted: m });
+    }
 },
  {
   command: ['announcements'],
@@ -408,6 +513,32 @@ module.exports = [
  
    await disapproveAllRequests(m, groupId);
     }
+},
+{
+  command: ['getgrouppp', 'getgrouprofilepic'],
+  operate: async ({ m, Cypher, reply, mess }) => {
+    if (!m.isGroup) return reply(mess.group);
+
+    try {
+      const ppUrl = await Cypher.profilePictureUrl(m.chat, 'image');
+
+      await Cypher.sendMessage(m.chat, 
+        { 
+          image: { url: ppUrl }, 
+          caption: `🔹 *This Group's Profile Picture*`
+        }, 
+        { quoted: m }
+      );
+    } catch {
+      await Cypher.sendMessage(m.chat, 
+        { 
+          image: { url: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png?q=60' }, 
+          caption: '⚠️ No profile picture found for this group.'
+        }, 
+        { quoted: m }
+      );
+    }
+  }
 },
  {
     command: ['editsettings', 'editinfo'],

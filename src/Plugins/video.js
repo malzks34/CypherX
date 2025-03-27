@@ -7,12 +7,12 @@ const { toAudio } = require('../../lib/converter');
 module.exports = [
  {
   command: ['volvideo'],
-  operate: async ({ Cypher, m, reply, args }) => {
+  operate: async ({ Cypher, m, reply, args, prefix, command }) => {
   
   const quoted = m.quoted ? m.quoted : null;
   const mime = quoted?.mimetype || "";
       
-    if (!args.join(" ")) return reply(`*Example: ${global.prefixz + command} 10*`);
+    if (!args.join(" ")) return reply(`*Example: ${prefix + command} 10*`);
    if (!quoted || !/video/.test(mime)) return reply(`Reply to an *video file* with *${prefix + command}* to adjust volume.`);
 
     try {

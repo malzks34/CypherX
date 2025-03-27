@@ -560,6 +560,74 @@ await reply(`+${userToRemove.split('@')[0]} is not in the sudo list.`);
   }
 },
 {
+    command: ['warn'],
+    operate: async ({ m, warnHandler }) => {
+        let user = m.mentionedJid && m.mentionedJid[0] || (m.quoted ? m.quoted.sender : null);
+        await warnHandler(user);
+    }
+},
+{
+    command: ['resetwarn'],
+    operate: async ({ m, db, from, isAdmins, isCreator, isBotAdmins, reply, Cypher, mess }) => {
+
+        let isGroup = from.endsWith("@g.us");
+        if (isGroup && !isBotAdmins) return reply(mess.admin);
+        if (!isAdmins && !isCreator) return reply(mess.notadmin);
+
+        let user = m.mentionedJid && m.mentionedJid[0] || (m.quoted ? m.quoted.sender : null);
+        if (!user) return reply("*Mention a user or reply to their message to reset their warnings.*");
+
+        let targetDB = isGroup ? db.chats[from] : db.settings;
+
+        if (!targetDB.warnings || !targetDB.warnings[user]) return reply("*User has no warnings to reset.*");
+
+        delete targetDB.warnings[user];
+
+        await Cypher.sendMessage(from, {
+            text: `✅ *Warnings for @${user.split("@")[0]} have been reset!*`,
+            contextInfo: { mentionedJid: [user] },
+        }, { quoted: m });
+    }
+},
+{
+    command: ['setwarn'],
+    operate: async ({ m, db, from, isAdmins, isCreator, isBotAdmins, args, reply, mess }) => {
+
+        let isGroup = from.endsWith("@g.us");
+        if (isGroup && !isBotAdmins) return reply(mess.admin);
+        if (!isAdmins && !isCreator) return reply(mess.notadmin);
+
+        let limit = parseInt(args[0]);
+        if (!limit || isNaN(limit) || limit < 1) return reply("*Please provide a valid warn limit (minimum 1).*");
+
+        let targetDB = isGroup ? db.chats[from] : db.settings;
+        targetDB.warnLimit = limit;
+
+        reply(`✅ *Warn limit set to ${limit}.*`);
+    }
+},
+{
+    command: ['listwarn'],
+    operate: async ({ m, db, from, reply, Cypher }) => {
+
+        let isGroup = from.endsWith("@g.us");
+        let targetDB = isGroup ? db.chats[from] : db.settings;
+        let warnLimit = targetDB.warnLimit || 5;
+        let warnings = targetDB.warnings || {};
+
+        if (Object.keys(warnings).length === 0) return reply("*No users have been warned.*");
+
+        let warnList = Object.entries(warnings)
+            .map(([user, count]) => `@${user.split("@")[0]} - ${count} warns left`)
+            .join("\n");
+
+        await Cypher.sendMessage(from, {
+            text: `⚠️ *Warn Limit: ${warnLimit}*\n\n${warnList}`,
+            contextInfo: { mentionedJid: Object.keys(warnings) },
+        }, { quoted: m });
+    }
+},
+{
   command: ['resetsetting'],
   operate: async ({ reply, args, prefix, command, db, isCreator }) => {
     if (!isCreator) return reply("Only the owner can reset settings.");

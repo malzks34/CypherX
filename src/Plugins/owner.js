@@ -145,12 +145,22 @@ module.exports = [
         filename = 'audio.mp3';
       }
 
-      let buffer = Buffer.from([]);
+      let bufferArray = [];
       for await (const chunk of media) {
-        buffer = Buffer.concat([buffer, chunk]);
+        bufferArray.push(chunk);
+      }
+      let buffer = Buffer.concat(bufferArray);
+
+      if (type === 'audioMessage') {
+        await Cypher.sendMessage(
+          m.chat,
+          { audio: buffer, mimetype:  'audio/ogg; codecs=opus', ptt: true },
+          { quoted: m }
+        );
+      } else {
+        await Cypher.sendFile(m.chat, buffer, filename, caption, m);
       }
 
-      return Cypher.sendFile(m.chat, buffer, filename, caption, m);
     } catch (error) {
       console.error(error);
       reply(`*Failed to retrieve media. The message might not be a valid view-once media.*`);
@@ -293,6 +303,30 @@ module.exports = [
 
     text += `\nTotal bad words: ${bad.length}`;
     reply(text);
+  }
+},
+{
+  command: ['listblocked', 'blocked'],
+  operate: async ({ m, Cypher, reply, mess, isCreator }) => {
+    if (!isCreator) return reply(mess.owner);
+
+    try {
+      const blockedList = await Cypher.fetchBlocklist();
+
+      if (!blockedList.length) {
+        return reply('✅ No contacts are currently blocked.');
+      }
+
+      let blockedUsers = blockedList.map((user, index) => `🔹 *${index + 1}.* @${user.split('@')[0]}`).join('\n');
+
+      await Cypher.sendMessage(m.chat, {
+        text: `🚫 *Blocked Contacts:*\n\n${blockedUsers}`,
+        mentions: blockedList
+      }, { quoted: m });
+
+    } catch (error) {
+      reply('⚠️ Unable to fetch blocked contacts.');
+    }
   }
 },
 {

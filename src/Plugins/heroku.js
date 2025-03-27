@@ -91,4 +91,13 @@ module.exports = [
         }
     }
 },
+{
+  command: ['update', 'redeploy'],
+  operate: async ({ m, updateHerokuApp, isCreator, mess }) => {
+   if (!isCreator) return m.reply(mess.owner); 
+
+    await updateHerokuApp(m);
+
+  }
+},
 ];

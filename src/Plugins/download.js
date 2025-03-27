@@ -1,5 +1,4 @@
 const { fetchJson } = require('../../lib/myfunc');
-const { ringtone } = require('../../lib/scraper');
 const fetch = require('node-fetch'); 
 const fs = require('fs');
 const path = require('path');
@@ -358,7 +357,7 @@ module.exports = [
   }
 },
  {
-  command: ['song'],
+  command: ['song2'],
   operate: async ({ Cypher, m, reply, text, fetchMp3DownloadUrl }) => {
     if (!text) return reply('*Please provide a song name!*');
 
@@ -381,8 +380,39 @@ module.exports = [
     }
   }
 },
+{
+  command: ['song'],
+  operate: async ({ Cypher, m, reply, text, fetchMp3DownloadUrl }) => {
+    if (!text) return reply('*Please provide a song name!*');
+
+    try {
+      const search = await yts(text);
+      if (!search || search.all.length === 0) return reply('*The song you are looking for was not found.*');
+
+      const video = search.all[0];
+      
+      const apiUrl = `http://xploader-api.vercel.app/ytmp3buffer?url=${encodeURIComponent(video.url)}`;
+      
+      const response = await axios.get(apiUrl);
+      
+      const downloadBuffer = response.data.downloadBuffer;
+      
+      const audioBuffer = Buffer.from(downloadBuffer, 'base64');
+      
+      await Cypher.sendMessage(m.chat, {
+        audio: audioBuffer,
+        mimetype: 'audio/mpeg',
+        fileName: `${video.title}.mp3`
+      }, { quoted: m });
+
+    } catch (error) {
+      console.error('song command failed:', error);
+      reply(global.mess.error);
+    }
+  }
+},
   {
-  command: ['play'],
+  command: ['play2'],
   operate: async ({ Cypher, m, reply, text, fetchMp3DownloadUrl }) => {
     if (!text) return reply('*Please provide a song name!*');
 
@@ -405,25 +435,33 @@ module.exports = [
     }
   }
 },
- {
-  command: ['ringtone'],
-  operate: async ({ m, text, prefix, command, Cypher, reply }) => {
-    if (!text) return reply(`*Example: ${prefix + command} black rover*`);
-    
+{
+  command: ['play'],
+  operate: async ({ Cypher, m, reply, text, fetchMp3DownloadUrl }) => {
+    if (!text) return reply('*Please provide a song name!*');
+
     try {
-      let dltone2 = await ringtone.ringtone(text);
-      let result = dltone2[Math.floor(Math.random() * dltone2.length)];
+      const search = await yts(text);
+      if (!search || search.all.length === 0) return reply('*The song you are looking for was not found.*');
+
+      const video = search.all[0];
       
-      await Cypher.sendMessage(
-        m.chat,
-        {
-          audio: { url: result.audio },
-          fileName: result.title + ".mp3",
-          mimetype: "audio/mpeg",
-        },
-        { quoted: m }
-      );
+      const apiUrl = `http://xploader-api.vercel.app/ytmp3buffer?url=${encodeURIComponent(video.url)}`;
+      
+      const response = await axios.get(apiUrl);
+      
+      const downloadBuffer = response.data.downloadBuffer;
+      
+      const audioBuffer = Buffer.from(downloadBuffer, 'base64');
+      
+      await Cypher.sendMessage(m.chat, {
+        document: audioBuffer,
+        mimetype: 'audio/mpeg',
+        fileName: `${video.title}.mp3`
+      }, { quoted: m });
+
     } catch (error) {
+      console.error('playdoc command failed:', error);
       reply(global.mess.error);
     }
   }
@@ -505,31 +543,6 @@ module.exports = [
   }
 },
 {
-  command: ['videodoc'],
-  operate: async ({ Cypher, m, reply, text, fetchVideoDownloadUrl }) => {
-    if (!text) return reply('*Please provide a song name!*');
-
-    try {
-      const search = await yts(text);
-      if (!search || search.all.length === 0) return reply('*The song you are looking for was not found.*');
-
-      const video = search.all[0]; 
-      const videoData = await fetchVideoDownloadUrl(video.url);
-
-      await Cypher.sendMessage(m.chat, {
-        document: { url: videoData.data.dl },
-        mimetype: 'video/mp4',
-        fileName: `${videoData.data.title}.mp4`,
-        caption: videoData.data.title
-      }, { quoted: m });
-
-    } catch (error) {
-      console.error('videodoc command failed:', error);
-      reply(global.mess.error);
-    }
-  }
-},
-  {
   command: ['videodoc'],
   operate: async ({ Cypher, m, reply, text, fetchVideoDownloadUrl }) => {
     if (!text) return reply('*Please provide a song name!*');
