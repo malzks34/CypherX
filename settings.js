@@ -19,7 +19,7 @@ if (fs.existsSync('.env')) require('dotenv').config({ path: __dirname+'/.env' })
 
 //--------------------[ SESSION ID ]----------------------//
 
-global.SESSION_ID = process.env.SESSION_ID || 'XPLOADER-BOT:~a2pTVZ7B#8stJ0t-0eLRY8v5INmttPOc3SNFXr96c5TXAxhsdBKo' 
+global.SESSION_ID = process.env.SESSION_ID || 'XPLOADER-BOT:XPLOADER-BOT:~23Y0mDxb#OYjzocm70TzNtND1gTqcWBvtNP-14rSM9uDQ7MFpFRE' 
 // You know the drill. Put your CypherX session id here. Should look like: XPLOADER-BOT:~ (don't forget that, it's crucial!)
 
 //--------------------[ BOT NAME ]----------------------//
