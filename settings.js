@@ -19,12 +19,12 @@ if (fs.existsSync('.env')) require('dotenv').config({ path: __dirname+'/.env' })
 
 //--------------------[ SESSION ID ]----------------------//
 
-global.SESSION_ID = process.env.SESSION_ID || 'XPLOADER-BOT:XPLOADER-BOT:~23Y0mDxb#OYjzocm70TzNtND1gTqcWBvtNP-14rSM9uDQ7MFpFRE' 
+global.SESSION_ID = process.env.SESSION_ID || 'XPLOADER-BOT:~D3AHmI4C#8KmgszpfB28EsZVl1l4OvqrwC0ByhCUJqk39irENOio ' 
 // You know the drill. Put your CypherX session id here. Should look like: XPLOADER-BOT:~ (don't forget that, it's crucial!)
 
 //--------------------[ BOT NAME ]----------------------//
 
-global.botname = process.env.BOT_NAME || 'CypherX' 
+global.botname = process.env.BOT_NAME || 'mal hombrezks' 
 // Pick a name for the bot. Default is "CypherX" — but who doesn’t love a cool bot name?
 
 //-----------------[ OWNER NUMBER ]------------------//
@@ -39,12 +39,12 @@ global.ownername = process.env.OWNER_NAME || 'mal~hombrezks'
 
 //------------[ STICKER PACKNAME ]-----------------//
 
-global.packname = process.env.STICKER_PACK_NAME || "Cypher" 
+global.packname = process.env.STICKER_PACK_NAME || "mal hombrezks" 
 // Time to decide the name for your sticker pack. This will appear every time you create a sticker. "Cypher" is the default because... well, why not?
 
 //--------------[ STICKER AUTHOR NAME ]------------//
 
-global.author = process.env.STICKER_AUTHOR_NAME || "X" 
+global.author = process.env.STICKER_AUTHOR_NAME || "mal" 
 // Who's the artist behind those epic stickers? You, of course! Unless you're just using the default name "X" – mystery vibes!
 
 //----------------------[ TIMEZONE ]--------------------//
